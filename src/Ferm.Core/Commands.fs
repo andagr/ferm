@@ -5,8 +5,11 @@ open System.IO
 
 type Write = string seq -> unit
 
-type Core =
-  | Ls of string seq
+let ls args =
+  Directory.EnumerateFileSystemEntries(Seq.head args) 
+  |> Seq.map FileInfo 
+  |> Seq.map (fun fi -> fi.ToString())
+  |> ignore
 
 let map input =
   let inputParts = 
@@ -14,15 +17,10 @@ let map input =
     |> Array.filter (fun p -> String.length p > 0)
     |> List.ofArray
   match inputParts with
-  | ["ls"] -> Some (Ls ["."])
-  | "ls"::args -> Some (Ls args)
-  | _ -> None
+  | ["ls"] -> ls ["."]
+  | "ls"::args -> ls args
+  | _ -> ()
 
 let exec (write : Write) command =
   match command with
-  | Some (Ls args) -> 
-      Directory.EnumerateFileSystemEntries(Seq.head args) 
-      |> Seq.map FileInfo 
-      |> Seq.map (fun fi -> fi.ToString())
-      |> write
   | None -> ()

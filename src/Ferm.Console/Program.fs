@@ -8,7 +8,7 @@ let rec commandLoop () =
   let command = Console.ReadLine()
   if command = "exit" then ()
   else
-    command |> Commands.map |> Commands.exec writer
+    command |> Fsi.eval |> printfn "%A"
     commandLoop ()
 
 [<EntryPoint>]
