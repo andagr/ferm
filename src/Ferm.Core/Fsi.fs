@@ -12,13 +12,19 @@ let private createFsi =
   let inputStream = new StringReader("")
   let outputStream = new StringWriter(output)
   let errorsStream = new StringWriter(errors)
-  let argv = [|"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\FSharp\\fsi.exe"; "--noninteractive"|]
+  let argv = [|"fsi.exe"; "--noninteractive"|]
   let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-  FsiEvaluationSession.Create(fsiConfig, argv, inputStream, outputStream, errorsStream)
+  FsiEvaluationSession.Create(fsiConfig, argv, inputStream, outputStream, errorsStream), output, errors
 
-let private fsiSession = createFsi
+let private fsiSession, output, errors = createFsi
 
 let eval code =
-  match fsiSession.EvalExpression(code) with
-  | Some value -> value.ReflectionValue
-  | None -> "No result" :> obj
+  try
+    match fsiSession.EvalExpression(code) with // Todo: Eval interactive / script
+    | Some value -> value.ReflectionValue
+    | None -> "No result" :> obj
+  with
+    | _ -> 
+      let error = errors.ToString() :> obj
+      errors.Clear() |> ignore
+      error

@@ -13,5 +13,6 @@ let rec commandLoop () =
 
 [<EntryPoint>]
 let main argv =
+  // Commands.load ()
   commandLoop ()
   0

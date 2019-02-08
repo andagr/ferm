@@ -21,6 +21,6 @@ let map input =
   | "ls"::args -> ls args
   | _ -> ()
 
-let exec (write : Write) command =
-  match command with
-  | None -> ()
+let load () =
+  let ls = File.ReadAllText(@"C:\Users\andre\source\github\ferm\src\Ferm.Core\commands\ls.fsx")
+  Fsi.eval ls |> ignore
