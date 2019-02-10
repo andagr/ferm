@@ -1,26 +1,11 @@
 module Commands
 
-open System.Text.RegularExpressions
 open System.IO
 
-type Write = string seq -> unit
+let load writer =
+  Fsi.evalInteractive (File.ReadAllText(@"..\Ferm.Core\commands.fsx")) |> writer
 
-let ls args =
-  Directory.EnumerateFileSystemEntries(Seq.head args) 
-  |> Seq.map FileInfo 
-  |> Seq.map (fun fi -> fi.ToString())
-  |> ignore
-
-let map input =
-  let inputParts = 
-    Regex.Split(input, @"\s+") // Todo: Handle quoted strings with whitespace
-    |> Array.filter (fun p -> String.length p > 0)
-    |> List.ofArray
-  match inputParts with
-  | ["ls"] -> ls ["."]
-  | "ls"::args -> ls args
-  | _ -> ()
-
-let load () =
-  let ls = File.ReadAllText(@"C:\Users\andre\source\github\ferm\src\Ferm.Core\commands\ls.fsx")
-  Fsi.eval ls |> ignore
+let exec writer command =
+  match Fsi.evalInteractive command with
+  | Result.Ok _ -> ()
+  | e -> writer e

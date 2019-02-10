@@ -18,13 +18,15 @@ let private createFsi =
 
 let private fsiSession, output, errors = createFsi
 
-let eval code =
-  try
-    match fsiSession.EvalExpression(code) with // Todo: Eval interactive / script
-    | Some value -> value.ReflectionValue
-    | None -> "No result" :> obj
-  with
-    | _ -> 
-      let error = errors.ToString() :> obj
-      errors.Clear() |> ignore
-      error
+let evalInteractive code =
+  let result, errorInfo = fsiSession.EvalInteractionNonThrowing(code)
+  let warnings = 
+    errorInfo 
+    |> Array.map (fun w -> sprintf "Warning %s at %d, %d" w.Message w.StartLineAlternate w.StartColumn)
+    |> (fun ws -> System.String.Join("\n", ws))
+  match result with
+  | Choice1Of2 () -> 
+    let out =  output.ToString()
+    output.Clear() |> ignore
+    Result.Ok (sprintf "%s\n\n%s" warnings out)
+  | Choice2Of2 ex -> Result.Error (sprintf "%s\n\n%s" warnings ex.Message)
