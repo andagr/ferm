@@ -30,3 +30,11 @@ let evalInteractive code =
     output.Clear() |> ignore
     Result.Ok (sprintf "%s\n\n%s" warnings out)
   | Choice2Of2 ex -> Result.Error (sprintf "%s\n\n%s" warnings ex.Message)
+
+let init writer =
+  evalInteractive (File.ReadAllText(@"./commands.fsx")) |> writer
+
+let exec writer command =
+  match evalInteractive ("map " + command) with
+  | Result.Ok _ -> ()
+  | e -> writer e

@@ -10,11 +10,11 @@ let rec commandLoop () =
   let command = Console.ReadLine()
   if command = "exit" then ()
   else
-    command |> Commands.exec writer
+    command |> Fsi.exec writer
     commandLoop ()
 
 [<EntryPoint>]
 let main argv =
-  Commands.load writer
+  Fsi.init writer
   commandLoop ()
   0
