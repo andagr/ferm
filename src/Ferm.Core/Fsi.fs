@@ -32,9 +32,9 @@ let evalInteractive code =
   | Choice2Of2 ex -> Result.Error (sprintf "%s\n\n%s" warnings ex.Message)
 
 let init writer =
-  evalInteractive (File.ReadAllText(@"./commands.fsx")) |> writer
+  evalInteractive (File.ReadAllText(@"../Ferm.Core/Command.fsx")) |> writer
 
-let exec writer command =
-  match evalInteractive ("map " + command) with
-  | Result.Ok _ -> ()
+let mapCommands writer command =
+  match evalInteractive ("Command.mapCommands " + command) with
+  | Result.Ok c -> printfn ">>> %s <<<" c
   | e -> writer e

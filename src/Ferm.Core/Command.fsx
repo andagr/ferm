@@ -1,7 +1,8 @@
 open System
 open System.IO
+open System.Text.RegularExpressions
 
-module Commands =
+module Command =
   type private Marker = interface end
   let t = typeof<Marker>.DeclaringType
 
@@ -11,16 +12,23 @@ module Commands =
     t.GetMembers()
     |> Array.filter(fun mi -> mi.CustomAttributes |> Seq.exists (fun a -> a.AttributeType = typeof<CommandAttribute>))
 
-  let addDefaultArgs (command : string) =
-    let addArgs cmd =
+  let mapCommands (command : string) =
+    let addOrQuoteArgs cmd =
       if definedCommands |> Array.exists (fun dc -> dc.Name = cmd) then
-        sprintf "%s \"\"" cmd
-      else cmd
+        sprintf "Command.%s \"\"" cmd
+      else
+        let parts = Regex.Split(cmd, @"\s+")
+        let baseCmd = parts |> Array.head
+        let args = parts |> Array.tail |> (fun a -> String.Join(" ", a))
+        if String.length args > 1 && definedCommands |> Array.exists (fun dc -> dc.Name = baseCmd) then
+          sprintf "Command.%s \"%s\"" baseCmd args
+        else
+          cmd
     let commands = 
       command.Split([|"|>"|], StringSplitOptions.RemoveEmptyEntries) 
       |> Array.map (fun c -> c.Trim())
     commands
-    |> Array.map addArgs
+    |> Array.map addOrQuoteArgs
     |> (fun c -> String.Join(" |> ", c))
 
 
@@ -31,4 +39,4 @@ module Commands =
     |> Seq.map FileInfo 
     |> Seq.map (fun fi -> fi.ToString())
 
-Commands.addDefaultArgs "ls |> dir"
+let ls = Command.ls "."
