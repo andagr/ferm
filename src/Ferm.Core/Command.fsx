@@ -12,22 +12,23 @@ module Command =
     t.GetMembers()
     |> Array.filter(fun mi -> mi.CustomAttributes |> Seq.exists (fun a -> a.AttributeType = typeof<CommandAttribute>))
 
+  let isDefined command =
+    definedCommands |> Array.exists (fun dc -> dc.Name = command)
+
   let mapCommands (command : string) =
     let addOrQuoteArgs cmd =
-      if definedCommands |> Array.exists (fun dc -> dc.Name = cmd) then
-        sprintf "Command.%s \"\"" cmd
+      if isDefined cmd then
+        sprintf "Command.%s \".\"" cmd
       else
         let parts = Regex.Split(cmd, @"\s+")
         let baseCmd = parts |> Array.head
         let args = parts |> Array.tail |> (fun a -> String.Join(" ", a))
-        if String.length args > 1 && definedCommands |> Array.exists (fun dc -> dc.Name = baseCmd) then
+        if String.length args > 0 && isDefined baseCmd then
           sprintf "Command.%s \"%s\"" baseCmd args
         else
           cmd
-    let commands = 
-      command.Split([|"|>"|], StringSplitOptions.RemoveEmptyEntries) 
-      |> Array.map (fun c -> c.Trim())
-    commands
+    command.Split([|"|>"|], StringSplitOptions.RemoveEmptyEntries) 
+    |> Array.map (fun c -> c.Trim())
     |> Array.map addOrQuoteArgs
     |> (fun c -> String.Join(" |> ", c))
 
@@ -38,5 +39,3 @@ module Command =
     Directory.EnumerateFileSystemEntries(path) 
     |> Seq.map FileInfo 
     |> Seq.map (fun fi -> fi.ToString())
-
-let ls = Command.ls "."

@@ -5,6 +5,7 @@ open Microsoft.FSharp.Compiler.Interactive.Shell
 
 open System.IO
 open System.Text
+open System.Text.RegularExpressions
 
 let private createFsi =
   let output = new StringBuilder()
@@ -16,7 +17,7 @@ let private createFsi =
   let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
   FsiEvaluationSession.Create(fsiConfig, argv, inputStream, outputStream, errorsStream), output, errors
 
-let private fsiSession, output, errors = createFsi
+let private fsiSession, outSb, errors = createFsi
 
 let evalInteractive code =
   let result, errorInfo = fsiSession.EvalInteractionNonThrowing(code)
@@ -25,16 +26,26 @@ let evalInteractive code =
     |> Array.map (fun w -> sprintf "Warning %s at %d, %d" w.Message w.StartLineAlternate w.StartColumn)
     |> (fun ws -> System.String.Join("\n", ws))
   match result with
-  | Choice1Of2 () -> 
-    let out =  output.ToString()
-    output.Clear() |> ignore
-    Result.Ok (sprintf "%s\n\n%s" warnings out)
-  | Choice2Of2 ex -> Result.Error (sprintf "%s\n\n%s" warnings ex.Message)
+  | Choice1Of2 _ -> 
+    let output =  outSb.ToString()
+    outSb.Clear() |> ignore
+    Result.Ok (sprintf "%s\n\n%s" warnings output)
+  | Choice2Of2 ex -> Result.Error (sprintf "%s\n\n%s\n" warnings ex.Message)
+
+let parseIt (output : string) =
+  // val it : string = "Command.ls """
+  let itVal = Regex.Match((output.Trim()), "[^=]+ = (.+)$").Groups.[1].Value
+  let realItVal =
+    if itVal.StartsWith("\"") then itVal.Substring(1, String.length itVal - 2)
+    else itVal
+  realItVal
 
 let init writer =
-  evalInteractive (File.ReadAllText(@"../Ferm.Core/Command.fsx")) |> writer
+  match evalInteractive (File.ReadAllText(@"../Ferm.Core/Command.fsx")) with
+  | Ok _ -> ()
+  | Error e -> writer (Result.Error e)
 
 let mapCommands writer command =
-  match evalInteractive ("Command.mapCommands " + command) with
-  | Result.Ok c -> printfn ">>> %s <<<" c
-  | e -> writer e
+  match evalInteractive (sprintf "Command.mapCommands \"%s\"" command) with
+  | Ok output -> output |> parseIt |> evalInteractive |> writer
+  | Error e -> writer (Result.Error e)
