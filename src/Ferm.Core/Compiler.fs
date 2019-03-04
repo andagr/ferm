@@ -1,7 +1,6 @@
-#r "netstandard"
-#r "../packages/FSharp.Compiler.Service/lib/netstandard2.0/FSharp.Compiler.Service.dll"
-#r "../packages/System.Data.SqlClient/lib/netstandard2.0/System.Data.SqlClient.dll"
+module Compiler
 
+open System
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
 let input =
@@ -22,6 +21,6 @@ let checkFileResults =
   | FSharpCheckFileAnswer.Succeeded(res) -> res
   | res -> failwithf "Parsing did not finish... (%A)" res
 let identToken = FSharpTokenTag.IDENT
-let tip = checkFileResults.GetToolTipText(4, 7, inputLines.[1], ["foo"], identToken) |> Async.RunSynchronously
+let tip = checkFileResults.GetToolTipText(4, 7, inputLines.[1], ["foo"], identToken)
 printfn "%A" tip
 

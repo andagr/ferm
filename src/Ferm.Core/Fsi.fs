@@ -8,8 +8,8 @@ open System.Text
 open System.Text.RegularExpressions
 
 let private createFsi =
-  let output = new StringBuilder()
-  let errors = new StringBuilder()
+  let output = StringBuilder()
+  let errors = StringBuilder()
   let inputStream = new StringReader("")
   let outputStream = new StringWriter(output)
   let errorsStream = new StringWriter(errors)
@@ -35,10 +35,8 @@ let evalInteractive code =
 let parseIt (output : string) =
   // val it : string = "Command.ls """
   let itVal = Regex.Match((output.Trim()), "[^=]+ = (.+)$").Groups.[1].Value
-  let realItVal =
-    if itVal.StartsWith("\"") then itVal.Substring(1, String.length itVal - 2)
-    else itVal
-  realItVal
+  if itVal.StartsWith("\"") then itVal.Substring(1, String.length itVal - 2)
+  else itVal
 
 let init writer =
   match evalInteractive (File.ReadAllText(@"../Ferm.Core/Command.fsx")) with
